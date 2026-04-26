@@ -6,9 +6,8 @@ _site/
 .bundle/
 vendor/
 
-# wrangler files
-.wrangler
-.dev.vars*
-!.dev.vars.example
-.env*
-!.env.example
+# gitship internal state (auto-added by gitship)
+.gitship/
+
+# gitship diff exports (auto-added by gitship)
+gitship_exports/
