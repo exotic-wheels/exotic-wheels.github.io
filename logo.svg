@@ -1,0 +1,104 @@
+<svg width="400" height="480" viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>exotic-wheels logo</title>
+  <desc>Wheel logo with hexagonal hub and exotic wordmark</desc>
+
+  <!-- ── Background ── -->
+  <rect width="400" height="480" fill="white"/>
+
+  <!-- ── Wheel center ── -->
+  <!-- cx=200 cy=210 -->
+
+  <!-- Outer rim glow / fill -->
+  <circle cx="200" cy="210" r="118" fill="white" stroke="#c8c8d0" stroke-width="1.2" opacity="0.9"/>
+
+  <!-- Inner concentric ring (faint) -->
+  <circle cx="200" cy="210" r="96"  fill="none" stroke="#d4a574" stroke-width="0.8" opacity="0.35"/>
+  <!-- Hub glow -->
+  <circle cx="200" cy="210" r="36"  fill="#f9e8d8" opacity="0.6"/>
+  <circle cx="200" cy="210" r="22"  fill="#f5d5b8" opacity="0.5"/>
+
+  <!-- Outer rim (main) -->
+  <circle cx="200" cy="210" r="118" fill="none" stroke="#c07030" stroke-width="2.2"/>
+
+  <!-- ── Spokes — 6 spokes at 0°, 60°, 120°, 180°, 240°, 300° ──
+       Hub edge at r=14, rim inner edge at r=118
+       Dot 1 at r≈55, Dot 2 at r≈95 (outer, on rim circle) -->
+
+  <!-- Spoke angles in degrees: -90, -30, 30, 90, 150, 210 (so top spoke goes straight up) -->
+
+  <!-- Spoke 0: up (270° = -90°)  end=(200, 92) -->
+  <line x1="200" y1="210" x2="200" y2="92"  stroke="#c07030" stroke-width="2" stroke-linecap="round"/>
+  <!-- inner dot -->
+  <circle cx="200" cy="155" r="4.5" fill="#c07030"/>
+  <!-- outer dot on rim -->
+  <circle cx="200" cy="92"  r="5"   fill="#c07030"/>
+
+  <!-- Spoke 1: 30° from up → direction (sin30, -cos30) = (0.5, -0.866)
+       end = 200 + 118*0.5, 210 - 118*0.866 = 259, 108 -->
+  <line x1="200" y1="210" x2="259" y2="108" stroke="#c07030" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="229.5" cy="159" r="4.5" fill="#c07030"/>
+  <circle cx="259"   cy="108" r="5"   fill="#c07030"/>
+
+  <!-- Spoke 2: 120° from up → (sin120,-cos120)=(0.866, 0.5)
+       end = 200+118*0.866, 210+118*0.5 = 302, 269 -->
+  <line x1="200" y1="210" x2="302" y2="269" stroke="#c07030" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="251"   cy="239.5" r="4.5" fill="#c07030"/>
+  <circle cx="302"   cy="269"   r="5"   fill="#c07030"/>
+
+  <!-- Spoke 3: down (90°) end=(200, 328) -->
+  <line x1="200" y1="210" x2="200" y2="328" stroke="#c07030" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="200" cy="265" r="4.5" fill="#c07030"/>
+  <circle cx="200" cy="328" r="5"   fill="#c07030"/>
+
+  <!-- Spoke 4: 240° from up → (sin240,-cos240)=(-0.866, 0.5)
+       end = 200-118*0.866, 210+118*0.5 = 98, 269 -->
+  <line x1="200" y1="210" x2="98" y2="269" stroke="#c07030" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="149"  cy="239.5" r="4.5" fill="#c07030"/>
+  <circle cx="98"   cy="269"   r="5"   fill="#c07030"/>
+
+  <!-- Spoke 5: 300° from up → (sin300,-cos300)=(-0.5,-0.866)
+       end = 200-118*0.5, 210-118*0.866 = 141, 108 -->
+  <line x1="200" y1="210" x2="141" y2="108" stroke="#c07030" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="170.5" cy="159" r="4.5" fill="#c07030"/>
+  <circle cx="141"   cy="108" r="5"   fill="#c07030"/>
+
+  <!-- ── Hub: hexagon (flat-top) ── -->
+  <!-- r=14, flat-top means vertices at 30°,90°,150°,210°,270°,330° -->
+  <polygon
+    points="
+      200,196
+      212.1,203
+      212.1,217
+      200,224
+      187.9,217
+      187.9,203
+    "
+    fill="#c07030"
+    stroke="none"
+  />
+  <!-- Hub inner hole (dark) -->
+  <polygon
+    points="
+      200,200.5
+      208.2,205.25
+      208.2,214.75
+      200,219.5
+      191.8,214.75
+      191.8,205.25
+    "
+    fill="#1a1008"
+    stroke="none"
+  />
+
+  <!-- ── Wordmark ── -->
+  <text
+    x="200" y="390"
+    text-anchor="middle"
+    font-family="&quot;IBM Plex Mono&quot;, &quot;Courier New&quot;, monospace"
+    font-size="32"
+    font-weight="700"
+    fill="#1a1008"
+    letter-spacing="1"
+  >exotic</text>
+
+</svg>
