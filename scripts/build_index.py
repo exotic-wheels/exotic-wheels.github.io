@@ -4,6 +4,8 @@ scripts/build_index.py — PEP 503 index generator for exotic-wheels.
 
 For packages in MERGE_WITH_PYPI: merges PyPI wheels + our GH release wheels
   (our builds take priority, so exotic platforms override PyPI mainstream).
+For packages in EXTRA_REPOS: scrapes wheels from a different GH repo's releases
+  and merges them in (no duplication — just links to the source repo URLs).
 For all other packages: ONLY serves our GH release wheels — no PyPI fallback.
 
 Usage:
@@ -22,8 +24,13 @@ SIMPLE_DIR = REPO_ROOT / "simple"
 # Only these packages get their PyPI wheels merged in.
 # Everything else is served ONLY from our GH releases.
 MERGE_WITH_PYPI = {
-    "uv-ffi",
     "omnipkg",
+}
+
+# Packages whose wheels live in a different GH repo's releases.
+# We scrape them and link directly — no file copying, no duplication.
+EXTRA_REPOS = {
+    "uv-ffi": "1minds3t/uv-ffi",
 }
 
 
@@ -44,11 +51,11 @@ def gh_get(url, token):
         return json.loads(r.read())
 
 
-def gh_releases(token):
+def gh_releases(token, repo=REPO):
     releases, page = [], 1
     while True:
         batch = gh_get(
-            f"https://api.github.com/repos/{REPO}/releases?per_page=100&page={page}",
+            f"https://api.github.com/repos/{repo}/releases?per_page=100&page={page}",
             token
         )
         if not batch: break
@@ -56,11 +63,11 @@ def gh_releases(token):
     return releases
 
 
-def gh_assets(release_id, token):
+def gh_assets(release_id, token, repo=REPO):
     assets, page = [], 1
     while True:
         batch = gh_get(
-            f"https://api.github.com/repos/{REPO}/releases/{release_id}/assets?per_page=100&page={page}",
+            f"https://api.github.com/repos/{repo}/releases/{release_id}/assets?per_page=100&page={page}",
             token
         )
         if not batch: break
@@ -93,6 +100,8 @@ def html(title, body):
 
 def main():
     token = gh_token()
+
+    # --- scrape primary repo ---
     print(f"Fetching GH releases from {REPO}...")
     releases = gh_releases(token)
     print(f"  Found {len(releases)} releases")
@@ -103,6 +112,20 @@ def main():
             if asset["name"].endswith(".whl"):
                 proj = wheel_project(asset["name"])
                 gh_wheels.setdefault(proj, {})[asset["name"]] = asset["browser_download_url"]
+
+    # --- scrape extra repos ---
+    for pkg, extra_repo in EXTRA_REPOS.items():
+        print(f"\nFetching releases from extra repo: {extra_repo} (for {pkg})")
+        extra_releases = gh_releases(token, repo=extra_repo)
+        print(f"  Found {len(extra_releases)} releases")
+        count = 0
+        for rel in extra_releases:
+            for asset in gh_assets(rel["id"], token, repo=extra_repo):
+                if asset["name"].endswith(".whl"):
+                    proj = wheel_project(asset["name"])
+                    gh_wheels.setdefault(proj, {})[asset["name"]] = asset["browser_download_url"]
+                    count += 1
+        print(f"  Indexed {count} wheels from {extra_repo}")
 
     if not gh_wheels:
         print("No wheel assets found in any GH release."); return
