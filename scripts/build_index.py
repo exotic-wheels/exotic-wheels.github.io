@@ -24,10 +24,16 @@ import sys
 from pathlib import Path
 from urllib.request import urlopen, Request
 
-REPO         = "1minds3t/exotic-wheels"
-PAGES_BASE   = "https://exotic-wheels.pages.dev"
+# 1. Point to your new Organization repo
+REPO         = "exotic-wheels/exotic-wheels.github.io"
+
+# 2. Update to your new clean GitHub URL
+PAGES_BASE   = "https://exotic-wheels.github.io"
+
+# 3. Set the directory to REPO_ROOT so folders (like /cryptography/) 
+#    are created at the root of the site, not inside a 'simple' folder.
 REPO_ROOT    = Path(__file__).parent.parent
-SIMPLE_DIR   = REPO_ROOT / "simple"
+SIMPLE_DIR   = REPO_ROOT
 
 # ── GH API ───────────────────────────────────────────────────────────────────
 
