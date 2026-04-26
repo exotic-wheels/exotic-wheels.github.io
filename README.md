@@ -1,4 +1,7 @@
-# exotic-wheels
+<!-- banner / header -->
+<img src="/banner.svg" alt="exotic-wheels platform coverage">
+
+# exotic-wheels 
 
 Pre-built wheels for platforms PyPI forgot.
 
