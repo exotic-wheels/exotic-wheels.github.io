@@ -14,8 +14,7 @@ Requires: gh CLI authenticated with access to exotic-wheels org.
 import subprocess, sys
 from pathlib import Path
 
-REPO = "exotic-wheels/exotic-wheels.github.io"
-
+REPO = "1minds3t/exotic-wheels"
 
 def main():
     if len(sys.argv) < 4:

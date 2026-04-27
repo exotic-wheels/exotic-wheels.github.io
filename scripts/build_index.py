@@ -30,7 +30,10 @@ MERGE_WITH_PYPI = {
 # Packages whose wheels live in a different GH repo's releases.
 # We scrape them and link directly — no file copying, no duplication.
 EXTRA_REPOS = {
-    "uv-ffi": "1minds3t/uv-ffi",
+    "cffi":         "1minds3t/exotic-wheels",
+    "psutil":       "1minds3t/exotic-wheels",
+    "cryptography": "1minds3t/exotic-wheels",
+    "uv-ffi":       "1minds3t/uv-ffi",
 }
 
 
