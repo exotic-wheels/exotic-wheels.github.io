@@ -2,11 +2,20 @@
 """
 scripts/build_index.py — PEP 503 index generator for exotic-wheels.
 
-For packages in MERGE_WITH_PYPI: merges PyPI wheels + our GH release wheels
-  (our builds take priority, so exotic platforms override PyPI mainstream).
-For packages in EXTRA_REPOS: scrapes wheels from a different GH repo's releases
-  and merges them in (no duplication — just links to the source repo URLs).
-For all other packages: ONLY serves our GH release wheels — no PyPI fallback.
+Outputs package indexes to ROOT-LEVEL dirs (no /simple/ prefix) so that:
+  https://exotic-wheels.github.io/          ← landing page + hidden pip root index
+  https://exotic-wheels.github.io/uv-ffi/  ← pip package page
+
+The landing page (index.html) gets a hidden PEP 503 block injected between
+  <!-- PIP-INDEX-START --> and <!-- PIP-INDEX-END -->
+markers so it's idempotent — safe to run multiple times.
+
+pip finds the hidden <a href="uv-ffi/"> tags and follows them.
+Humans see the landing page. Both work at the same URL.
+
+For packages in MERGE_WITH_PYPI: merges PyPI wheels + our GH release wheels.
+For packages in EXTRA_REPOS: links directly to a different GH repo's releases.
+For all other packages: ONLY serves our GH release wheels.
 
 Usage:
     python scripts/build_index.py
@@ -17,18 +26,19 @@ from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
-REPO       = "exotic-wheels/exotic-wheels.github.io"
-REPO_ROOT  = Path(__file__).parent.parent
-SIMPLE_DIR = REPO_ROOT / "simple"
+REPO      = "exotic-wheels/exotic-wheels.github.io"
+REPO_ROOT = Path(__file__).parent.parent
+
+# Markers — must stay in sync with index.html
+PIP_START = "<!-- PIP-INDEX-START -->"
+PIP_END   = "<!-- PIP-INDEX-END -->"
 
 # Only these packages get their PyPI wheels merged in.
-# Everything else is served ONLY from our GH releases.
 MERGE_WITH_PYPI = {
     "omnipkg",
 }
 
 # Packages whose wheels live in a different GH repo's releases.
-# We scrape them and link directly — no file copying, no duplication.
 EXTRA_REPOS = {
     "cffi":         "1minds3t/exotic-wheels",
     "psutil":       "1minds3t/exotic-wheels",
@@ -94,11 +104,62 @@ def pypi_wheels(pkg):
 
 def normalize(name): return re.sub(r"[-_.]+", "-", name).lower()
 def wheel_project(fn): return normalize(fn.split("-")[0])
-def html(title, body):
-    return (f'<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset="utf-8">\n'
-            f'    <meta name="pypi:repository-version" content="1.0">\n'
-            f'    <title>{title}</title>\n  </head>\n'
-            f'  <body>\n    <h1>{title}</h1>\n{body}\n  </body>\n</html>\n')
+
+
+def pkg_index_html(title, wheels):
+    """PEP 503 per-package page — plain, pip-compatible."""
+    links = "\n".join(
+        f'    <a href="{u}">{f}</a>' for f, u in sorted(wheels.items())
+    )
+    return (
+        f'<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset="utf-8">\n'
+        f'    <meta name="pypi:repository-version" content="1.0">\n'
+        f'    <title>{title}</title>\n  </head>\n'
+        f'  <body>\n    <h1>{title}</h1>\n{links}\n  </body>\n</html>\n'
+    )
+
+
+def inject_pip_block(index_html: Path, projects: dict):
+    """
+    Inject (or replace) the hidden PEP 503 root block into index.html.
+    Block is wrapped in PIP-INDEX-START / PIP-INDEX-END markers.
+    Safe to call multiple times — replaces existing block, never duplicates.
+    """
+    if not index_html.exists():
+        print(f"  WARNING: {index_html} not found — skipping pip block injection")
+        return
+
+    content = index_html.read_text(encoding="utf-8")
+
+    # Build the new block
+    pkg_links = "\n".join(
+        f'    <a href="{n}/">{n}</a>' for n in sorted(projects)
+    )
+    new_block = (
+        f"{PIP_START}\n"
+        f'<div style="display:none" aria-hidden="true">\n'
+        f'  <!-- PEP 503 pip index — hidden from humans, readable by pip -->\n'
+        f'{pkg_links}\n'
+        f'</div>\n'
+        f"{PIP_END}"
+    )
+
+    if PIP_START in content and PIP_END in content:
+        # Replace existing block
+        before = content[:content.index(PIP_START)]
+        after  = content[content.index(PIP_END) + len(PIP_END):]
+        updated = before + new_block + after
+        print(f"  Replaced existing pip block in {index_html.name}")
+    elif "</body>" in content:
+        # Inject just before </body>
+        updated = content.replace("</body>", f"\n{new_block}\n</body>")
+        print(f"  Injected pip block into {index_html.name}")
+    else:
+        # Append to end
+        updated = content.rstrip() + f"\n{new_block}\n"
+        print(f"  Appended pip block to {index_html.name}")
+
+    index_html.write_text(updated, encoding="utf-8")
 
 
 def main():
@@ -140,29 +201,37 @@ def main():
             merged = {}
             for _, fn, url in pypi_wheels(proj):
                 merged[fn] = url
-            merged.update(wheels)  # our builds override PyPI
+            merged.update(wheels)
             print(f"  GH: {len(wheels)} | merged total: {len(merged)}")
         else:
             print(f"\nGH-only (exotic builds): {proj}  ({len(wheels)} wheels)")
             merged = dict(wheels)
         all_projects[proj] = merged
 
-    if SIMPLE_DIR.exists(): shutil.rmtree(SIMPLE_DIR)
-    SIMPLE_DIR.mkdir()
-
-    root = "\n".join(f'    <a href="{n}/">{n}</a>' for n in sorted(all_projects))
-    (SIMPLE_DIR / "index.html").write_text(html("Simple Index", root))
-
+    # --- write per-package indexes to root-level dirs ---
     total = 0
     for proj, wheels in sorted(all_projects.items()):
-        d = SIMPLE_DIR / proj; d.mkdir()
-        links = "\n".join(f'    <a href="{u}">{f}</a>' for f, u in sorted(wheels.items()))
-        (d / "index.html").write_text(html(f"Links for {proj}", links))
+        d = REPO_ROOT / proj
+        # clean and recreate
+        if d.exists() and d.is_dir():
+            shutil.rmtree(d)
+        d.mkdir()
+        (d / "index.html").write_text(pkg_index_html(f"Links for {proj}", wheels))
         total += len(wheels)
-        print(f"  simple/{proj}/index.html  ({len(wheels)} wheels)")
+        print(f"  {proj}/index.html  ({len(wheels)} wheels)")
+
+    # --- inject hidden pip block into landing page ---
+    inject_pip_block(REPO_ROOT / "index.html", all_projects)
+
+    # --- remove old simple/ dir if it exists ---
+    old_simple = REPO_ROOT / "simple"
+    if old_simple.exists():
+        shutil.rmtree(old_simple)
+        print(f"\n  Removed old simple/ directory")
 
     print(f"\nDone. {total} wheels across {len(all_projects)} packages.")
-    print('git add simple/ && git commit -m "chore: regenerate index" && git push')
+    print('git add -A && git commit -m "chore: regenerate index" && git push')
+
 
 if __name__ == "__main__":
     main()
