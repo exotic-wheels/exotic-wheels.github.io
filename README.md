@@ -4,7 +4,7 @@
 
 ## Install
 
-```pip install crpytography --extra-index-url https://exotic-wheels.github.io/```
+```pip install cryptography --extra-index-url https://exotic-wheels.github.io/```
 
 ## About
 
