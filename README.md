@@ -17,4 +17,3 @@ Wheels are built, signed, and released at **[1minds3t/exotic-wheels](https://git
 - 📦 **Releases & wheels**: [1minds3t/exotic-wheels](https://github.com/1minds3t/exotic-wheels)
 - 🐛 **Issues / wheel requests**: [1minds3t/exotic-wheels/issues](https://github.com/1minds3t/exotic-wheels/issues)
 - 📖 **Index**: [exotic-wheels.github.io](https://exotic-wheels.github.io)
-```
